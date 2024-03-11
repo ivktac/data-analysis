@@ -132,6 +132,9 @@ def task3():
 
     normal_random_numbers = generate_normal_random(n, a, D)
 
+    for i in range(n):
+        print(f"Normal random number {i + 1}: {normal_random_numbers[i]:.4f}")
+
     plt.hist(
         normal_random_numbers,
         bins=20,
