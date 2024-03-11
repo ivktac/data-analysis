@@ -89,10 +89,10 @@ def generate_normal_random(n, a, D):
 
 
 def task1():
-    M = 10**8
+    M = 2**8
 
-    a0_prime = 12345
-    beta = 197
+    a0_prime = 13
+    beta = 5 ** (2 * 3 + 1)
 
     lcg = linear_congruential_generator(beta, M, a0_prime)
 
