@@ -38,27 +38,23 @@ def perform_tests(random_numbers, delta, y):
     n = len(random_numbers)
     mean, variance = calculate_moments(random_numbers)
 
-    # Compute random deviations
     xi_1 = mean - 0.5
     xi_2 = variance - 1 / 12
 
-    # Calculate test statistics
     w1 = math.sqrt(12) * abs(xi_1)
     w2 = xi_2 / math.sqrt(0.0056 / n + 0.0028 / (n**2) - 0.0083 / (n**3))
 
-    # Test for mean deviation
     if w1 < delta:
         print(f"Accept H0 for mean deviation with confidence probability {y}")
     else:
         print(f"Reject H0 for mean deviation with confidence probability {y}")
 
-    # Test for variance deviation
     if w2 < delta:
         print(f"Accept H0 for variance deviation with confidence probability {y}")
     else:
         print(f"Reject H0 for variance deviation with confidence probability {y}")
 
-    # Frequency test
+    # Частотний тест
     sigma = math.sqrt(variance)
     lower_bound = mean - sigma
     upper_bound = mean + sigma
@@ -93,21 +89,17 @@ def generate_normal_random(n, a, D):
 
 
 def task1():
-    M = 10**8  # M = 10^8
+    M = 10**8
 
-    a0_prime = 12345  # Not a multiple of 2 or 5
-    beta = 197  # One of the recommended values
+    a0_prime = 12345
+    beta = 197
 
-    # Create the linear congruential generator
     lcg = linear_congruential_generator(beta, M, a0_prime)
 
-    # Generate uniform random numbers in the interval (0, 1)
     uniform_random = generate_uniform_random(0, 1, lcg)
 
-    # Generate uniform random numbers in a different interval (e.g., (10, 20))
     interval_random = generate_uniform_random(10, 100, lcg)
 
-    # Print the first 10 random numbers
     print("First uniform random number in (0, 1):")
     print(next(uniform_random))
 
@@ -128,7 +120,7 @@ def task3():
     N = 6
     n = 100 + 10 * N
     a = N
-    D = 4
+    D = 1
 
     normal_random_numbers = generate_normal_random(n, a, D)
 
