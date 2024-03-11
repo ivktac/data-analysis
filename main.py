@@ -127,25 +127,8 @@ def task3():
     for i in range(n):
         print(f"Normal random number {i + 1}: {normal_random_numbers[i]:.4f}")
 
-    plt.hist(
-        normal_random_numbers,
-        bins=20,
-        alpha=0.6,
-        color="g",
-        edgecolor="black",
-        density=True,
-    )
-    xmin, xmax = plt.xlim()
-
     mean = sum(normal_random_numbers) / n
     variance = sum((x - mean) ** 2 for x in normal_random_numbers) / n
-
-    x = np.linspace(xmin, xmax, 100)
-    p = np.exp(-((x - mean) ** 2) / (2 * variance))
-    p = p / (np.sqrt(2 * np.pi * variance))
-
-    plt.plot(x, p, "k", linewidth=2)
-    plt.show()
 
     print(f"Mean: {mean:.4f}")
     print(f"Variance: {variance:.4f}")
