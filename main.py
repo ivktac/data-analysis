@@ -1,4 +1,6 @@
 import math
+import numpy as np
+import matplotlib.pyplot as plt
 
 
 def linear_congruential_generator(beta, M, a0_prime):
@@ -70,9 +72,9 @@ def perform_tests(random_numbers, delta, y):
 
 
 def generate_normal_random(n, a, D):
-    M = 10**8
+    M = 2**16
     a_0_prime = 12345
-    beta = 197
+    beta = 5**9
 
     lcg = linear_congruential_generator(beta, M, a_0_prime)
     uniform_random = generate_uniform_random(0, 1, lcg)
@@ -130,11 +132,25 @@ def task3():
 
     normal_random_numbers = generate_normal_random(n, a, D)
 
-    for i in range(n):
-        print(f"{i + 1}: {normal_random_numbers[i]:.4f}")
+    plt.hist(
+        normal_random_numbers,
+        bins=20,
+        alpha=0.6,
+        color="g",
+        edgecolor="black",
+        density=True,
+    )
+    xmin, xmax = plt.xlim()
 
     mean = sum(normal_random_numbers) / n
     variance = sum((x - mean) ** 2 for x in normal_random_numbers) / n
+
+    x = np.linspace(xmin, xmax, 100)
+    p = np.exp(-((x - mean) ** 2) / (2 * variance))
+    p = p / (np.sqrt(2 * np.pi * variance))
+
+    plt.plot(x, p, "k", linewidth=2)
+    plt.show()
 
     print(f"Mean: {mean:.4f}")
     print(f"Variance: {variance:.4f}")
