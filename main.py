@@ -42,7 +42,7 @@ def perform_tests(random_numbers, delta, y):
 
     # Calculate test statistics
     w1 = math.sqrt(12) * abs(xi_1)
-    w2 = xi_2 / math.sqrt(1 / (12 * n))
+    w2 = xi_2 / math.sqrt(0.0056 / n + 0.0028 / (n**2) - 0.0083 / (n**3))
 
     # Test for mean deviation
     if w1 < delta:
@@ -64,7 +64,7 @@ def perform_tests(random_numbers, delta, y):
     expected_proportion = 0.577
     actual_proportion = count_in_range / n
     print(
-        f"Proportion of numbers within (m - sigma, m + sigma): {actual_proportion:.4f}"
+        f"Proportion of numbers within (m - {sigma}, m + {sigma}): {actual_proportion:.4f}"
     )
     print(f"Expected proportion for uniform distribution: {expected_proportion:.4f}")
 
@@ -103,16 +103,14 @@ def task1():
     uniform_random = generate_uniform_random(0, 1, lcg)
 
     # Generate uniform random numbers in a different interval (e.g., (10, 20))
-    interval_random = generate_uniform_random(10, 20, lcg)
+    interval_random = generate_uniform_random(10, 100, lcg)
 
     # Print the first 10 random numbers
-    print("First 10 uniform random numbers in (0, 1):")
-    for _ in range(10):
-        print(next(uniform_random))
+    print("First uniform random number in (0, 1):")
+    print(next(uniform_random))
 
-    print("\nFirst 10 uniform random numbers in (10, 20):")
-    for _ in range(10):
-        print(next(interval_random))
+    print("\nFirst uniform random number in (10, 100):")
+    print(next(interval_random))
 
 
 def task2():
@@ -131,6 +129,9 @@ def task3():
     D = 4
 
     normal_random_numbers = generate_normal_random(n, a, D)
+
+    for i in range(n):
+        print(f"{i + 1}: {normal_random_numbers[i]:.4f}")
 
     mean = sum(normal_random_numbers) / n
     variance = sum((x - mean) ** 2 for x in normal_random_numbers) / n
