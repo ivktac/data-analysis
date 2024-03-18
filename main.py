@@ -1,4 +1,5 @@
 import math
+import matplotlib.pyplot as plt
 
 
 class LinearCongruentialGenerator:
@@ -81,8 +82,9 @@ class RandomNumberGenerator:
         random_numbers = uniform_random.generate(n)
         normal_dist = []
 
+        N = 12
         for i in range(n):
-            xi = (sum(random_numbers[i : i + 12]) - (n / 2)) * math.sqrt(12 / n)
+            xi = (sum(random_numbers[i : i + N]) - (N / 2)) * math.sqrt(12 / N)
             etha = a + math.sqrt(D) * xi
             normal_dist.append(etha)
 
@@ -94,7 +96,7 @@ if __name__ == "__main__":
     # Define parameters
     n = 10000
     a = 6
-    D = 0.02
+    D = 0.2
     beta = 5 ** (2 * 3 + 1)
     M = 2**8
     a0_prime = 13
@@ -120,3 +122,54 @@ if __name__ == "__main__":
     mean = sum(normal_numbers) / n
     var = sum((x - mean) ** 2 for x in normal_numbers) / n
     print(f"Mean: {mean:.4f}, variance: {var:.4f}")
+
+    # k = round(1 + 3.322 * math.log10(n))
+    k = 10 + a
+    min = min(normal_numbers)
+    max = max(normal_numbers)
+    h = (max - min) / k
+    intervals = [min + i * h for i in range(k + 1)]
+    frequencies = [0] * k
+    for x in normal_numbers:
+        for i in range(k):
+            if intervals[i] <= x < intervals[i + 1]:
+                frequencies[i] += 1
+                break
+
+    for i in range(k):
+        print(
+            f"Interval {i + 1}: [{intervals[i]:.4f}, {intervals[i + 1]:.4f}] - Frequency: {frequencies[i]}"
+        )
+
+    # find mean, standard deviation, variance and anomalies
+    mean = sum(intervals[i] * frequencies[i] for i in range(k)) / n
+    print(f"Mean: {mean:.4f}")
+
+    var = sum((intervals[i] - mean) ** 2 * frequencies[i] for i in range(k)) / n
+
+    std = math.sqrt(var)
+    print(f"Variance: {var:.4f}, Standard deviation: {std:.4f}")
+
+    var_ddof = sum((intervals[i] - mean) ** 2 * frequencies[i] for i in range(k)) / (
+        n - 1
+    )
+    print(f"Sample variance: {var_ddof:.4f}")
+
+    # find anomalies by rule of three sigmas
+    anomalies = []
+    for i in range(k):
+        if abs(intervals[i] - mean) > 3 * std:
+            anomalies.append(i)
+    print(f"Anomalies count: {len(anomalies)}")
+
+    # Build an empirical data distribution function
+    x = [intervals[i] for i in range(k)]
+    y = [sum(frequencies[:i]) / n for i in range(k)]
+    plt.figure(figsize=(10, 6))
+    plt.step(x, y, where="mid", linestyle="--", label="Empirical Distribution")
+    plt.xlabel("Інтервали")
+    plt.ylabel("Нормована частота")
+    plt.title("Емпірична функція розподілу")
+    plt.legend()
+    plt.grid(True)
+    plt.show()
