@@ -177,32 +177,34 @@ if __name__ == "__main__":
     plt.show()
 
     numbers = np.array(normal_numbers)
-    variation_range = np.sort(numbers)
-    empirical_freq, bins = np.histogram(numbers, bins="auto")
+    hist, bin_edges = np.histogram(numbers, bins="auto", density=False)
+    empirical_frequencies = hist / len(numbers)
 
-    dist_params = stats.norm.fit(numbers)
+    mean, std_dev = np.mean(numbers), np.std(numbers)
 
-    theoretical_freq = stats.norm.pdf(bins[:-1], *dist_params)
-    theoretical_freq *= np.sum(empirical_freq) / np.sum(theoretical_freq)
+    intervals = len(bin_edges) - 1
 
-    chi2, p_value = stats.chisquare(empirical_freq, theoretical_freq)
+    theoretical_frequencies = np.array(
+        [
+            len(numbers)
+            * (
+                stats.norm.cdf(bin_edges[i + 1], loc=mean, scale=std_dev)
+                - stats.norm.cdf(bin_edges[i], loc=mean, scale=std_dev)
+            )
+            for i in range(intervals)
+        ]
+    )
+    chi2 = np.sum(
+        (empirical_frequencies - theoretical_frequencies) ** 2 / theoretical_frequencies
+    )
 
-    k = len(empirical_freq)
-    s = len(dist_params)
+    k = len(bin_edges) - 1
+    s = 2  # Кількість параметрів розподілу для нормального розподілу (середнє та стандартне відхилення)
     v = k - s - 1
 
-    alpha = 0.05
+    alpha = 0.95
     critical_value = stats.chi2.ppf(1 - alpha, v)
-
-    is_significant = chi2 > critical_value
-    if is_significant:
-        print("H0 rejected, distribution is not normal")
+    if chi2 < critical_value:
+        print("Accept the hypothesis that the data comes from the normal distribution")
     else:
-        print("H0 accepted, distribution is normal")
-
-    quadrature_formula = len(bins) - 1
-    agreement_criterion = chi2 / quadrature_formula
-    if agreement_criterion < alpha:
-        print("H0 rejected, distribution is not normal")
-    else:
-        print("H0 accepted, distribution is normal")
+        print("Reject the hypothesis that the data comes from the normal distribution")
