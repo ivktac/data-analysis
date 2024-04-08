@@ -1,5 +1,7 @@
 import math
 import matplotlib.pyplot as plt
+import numpy as np
+import scipy.stats as stats
 
 
 class LinearCongruentialGenerator:
@@ -173,3 +175,34 @@ if __name__ == "__main__":
     plt.legend()
     plt.grid(True)
     plt.show()
+
+    numbers = np.array(normal_numbers)
+    variation_range = np.sort(numbers)
+    empirical_freq, bins = np.histogram(numbers, bins="auto")
+
+    dist_params = stats.norm.fit(numbers)
+
+    theoretical_freq = stats.norm.pdf(bins[:-1], *dist_params)
+    theoretical_freq *= np.sum(empirical_freq) / np.sum(theoretical_freq)
+
+    chi2, p_value = stats.chisquare(empirical_freq, theoretical_freq)
+
+    k = len(empirical_freq)
+    s = len(dist_params)
+    v = k - s - 1
+
+    alpha = 0.05
+    critical_value = stats.chi2.ppf(1 - alpha, v)
+
+    is_significant = chi2 > critical_value
+    if is_significant:
+        print("H0 rejected, distribution is not normal")
+    else:
+        print("H0 accepted, distribution is normal")
+
+    quadrature_formula = len(bins) - 1
+    agreement_criterion = chi2 / quadrature_formula
+    if agreement_criterion < alpha:
+        print("H0 rejected, distribution is not normal")
+    else:
+        print("H0 accepted, distribution is normal")
