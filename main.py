@@ -1,36 +1,43 @@
 import math
 from typing import Generator
-import pandas as pd
 import scipy.stats as stats
 
+type Gen = Generator[float, None, None]
+type Sequence = list[float]
+type Interval = tuple[float, float]
+type VariationSeries = dict[Interval, int]
+type Frequency = dict[Interval, float]
 
-def residual(beta: int, M: int, a0_prime: int) -> Generator[float, None, None]:
+
+def residual(beta: int, m: int, a0_prime: int) -> Gen:
     a_prime = a0_prime
     while True:
-        ai_prime = (beta * a_prime) % M
-        ai = ai_prime / M
+        ai_prime = (beta * a_prime) % m
+        ai = ai_prime / m
         yield ai
         a_prime = ai_prime
 
 
-def uniform_random(
-    a: float, b: float, generator: Generator[float, None, None]
-) -> Generator[float, None, None]:
+def uniform_random(a: float, b: float, generator: Gen) -> Gen:
     while True:
         r = next(generator)
         yield a + (b - a) * r
 
 
-def conver_to_normal(
-    N: int, a: float, D: float, uniform_generator: Generator[float, None, None]
-) -> float:
+def convert_to_normal(N: int, mu: float, sigma: float, uniform_generator: Gen) -> float:
     random_numbers = [next(uniform_generator) for _ in range(N)]
     theta = math.sqrt(12 / N) * (sum(random_numbers) - N / 2)
-    nu = a + math.sqrt(D) * theta
+    nu = mu + math.sqrt(sigma) * theta
     return nu
 
 
-def construct_interval_series(data: list[float]):
+def create_normal_distribution(
+    size: int, mu: float, sigma: float, generator: Gen
+) -> Sequence:
+    return [convert_to_normal(size, mu, sigma, generator) for _ in range(size)]
+
+
+def construct_interval_series(data: Sequence) -> VariationSeries:
     x_min, x_max = min(data), max(data)
     R = x_max - x_min
     k = 1 + 3.322 * math.log(len(data))
@@ -45,55 +52,37 @@ def construct_interval_series(data: list[float]):
     return series
 
 
-def compute_empirical_frequency(
-    series: dict[tuple[float, float], int], data: list[float]
-):
+def compute_empirical_frequencies(series: VariationSeries, data: Sequence) -> Frequency:
     n = len(data)
     return {k: v / n for k, v in series.items()}
 
 
-def normal_distribution_probability(
-    lower_bound: float,
-    upper_bound: float,
-    mu: float,
-    sigma: float,
-    epsilon: float = 1e-3,
+def calculate_probability(
+    bounds: tuple[float, float], mu: float, sigma: float, epsilon: float = 1e-4
 ) -> float:
     total_probability = 0.0
-    x = lower_bound
-    while x < upper_bound:
-        pdf = (
-            1
-            / (sigma * math.sqrt(2 * math.pi))
-            * (math.exp(-0.5 * ((x - mu) / sigma) ** 2))
-        )
-        total_probability += pdf * epsilon
+    x = bounds[0]
+    while x < bounds[1]:
         x += epsilon
-    return total_probability
+        total_probability += epsilon * stats.norm.pdf(x, loc=mu, scale=sigma)
+    return float(total_probability)
 
 
 def compute_theoretical_frequency(
-    intevals: list[tuple[float, float]], mu: float, sigma: float, epsilon: float = 1e-3
-):
-    thereotical_frequencies = {}
-    for interval in intevals:
-        a, b = interval
-        probability = normal_distribution_probability(a, b, mu, sigma, epsilon)
-        thereotical_frequencies[interval] = probability
-    return thereotical_frequencies
+    intervals: list[Interval], mu: float, sigma: float
+) -> Frequency:
+    frequencies = {}
+    for interval in intervals:
+        probability = calculate_probability(interval, mu, sigma)
+        frequencies[interval] = probability
+    return frequencies
 
 
-def compute_criteria_pirson(
-    empirical: dict[tuple[float, float], float],
-    theoretical: dict[tuple[float, float], float],
-):
-    criteria = 0
-    for interval, empirical_frequency in empirical.items():
-        theoretical_frequency = theoretical[interval]
-        criteria += (
-            empirical_frequency - theoretical_frequency
-        ) ** 2 / theoretical_frequency
-    return criteria
+def compute_chi_square(empirical: Frequency, theoretical: Frequency) -> float:
+    return sum(
+        ((empirical[k] - theoretical[k]) ** 2) / theoretical[k]
+        for k in empirical.keys()
+    )
 
 
 def main():
@@ -103,35 +92,25 @@ def main():
     beta = 5 ** (2 * p + 1)
     a_generator = residual(beta, M, a0_prime)
     uniform_generator = uniform_random(0, 1, a_generator)
-
     N = 160
     a = 6
     D = next(uniform_generator)
+
     print(f"{a=}, {D=}")
 
-    samples = [conver_to_normal(N, a, D, a_generator) for _ in range(N)]
-    sorted_samples = sorted(samples)
+    data = create_normal_distribution(N, a, D, uniform_generator)
+    data = sorted(data)
 
-    interval_series = construct_interval_series(sorted_samples)
-    empirical_frequency = compute_empirical_frequency(interval_series, sorted_samples)
+    interval_series = construct_interval_series(data)
+    empirical_frequencies = compute_empirical_frequencies(interval_series, data)
 
     intervals = list(interval_series.keys())
-    theoretical_frequency = compute_theoretical_frequency(intervals, a, D)
+    theoretical_frequencies = compute_theoretical_frequency(intervals, a, D)
 
-    df = pd.DataFrame(
-        {
-            "Intervals": [f"{k[0]} - {k[1]}" for k in interval_series.keys()],
-            "Frequency": list(interval_series.values()),
-            "Empirical Frequency": list(empirical_frequency.values()),
-            "Theoretical Frequency": list(theoretical_frequency.values()),
-        }
-    )
-    print(df)
-
-    critical_value = compute_criteria_pirson(empirical_frequency, theoretical_frequency)
-    v = len(intervals) - 2
+    critical_value = compute_chi_square(empirical_frequencies, theoretical_frequencies)
 
     alpha = 0.05
+    v = len(intervals) - 2
     chi2 = stats.chi2.ppf(1 - alpha, v)
     print(
         f"Критичне значення: {critical_value}, критерій пірсона: {chi2} при ступені свободи {v=},"
