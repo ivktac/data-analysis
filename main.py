@@ -71,11 +71,9 @@ def calculate_probability(
 def compute_theoretical_frequency(
     intervals: list[Interval], mu: float, sigma: float
 ) -> Frequency:
-    frequencies = {}
-    for interval in intervals:
-        probability = calculate_probability(interval, mu, sigma)
-        frequencies[interval] = probability
-    return frequencies
+    return {
+        interval: calculate_probability(interval, mu, sigma) for interval in intervals
+    }
 
 
 def compute_chi_square(empirical: Frequency, theoretical: Frequency) -> float:
